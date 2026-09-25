@@ -2,6 +2,7 @@
 #include "bm_config.h"
 #include "bm_os.h"
 #include "bsp.h"
+#include "configuration.h"
 #include "io.h"
 #include "pubsub.h"
 #include "serial_bridge.h"
@@ -9,9 +10,10 @@
 #include <string.h>
 
 #define NUMBER_OF_COMMANDS_QUEUED 10
+#define COMMAND_WAIT_KEY "cmdWaitMs"
 
 static BmTimer timer[NUMBER_OF_COMMANDS_QUEUED] = {NULL};
-static uint64_t uptime_wait_ms = 60000;
+static uint32_t uptime_wait_ms = 60000;
 static uint8_t idx = 0;
 static BmSemaphore mut = NULL;
 static bool released = false;
@@ -96,6 +98,8 @@ static void sub_cb(uint64_t, const char *topic, uint16_t topic_len,
 
 void setup() {
   serial_bridge_init();
+  get_config_uint(BM_CFG_PARTITION_SYSTEM, COMMAND_WAIT_KEY,
+                  sizeof(COMMAND_WAIT_KEY), &uptime_wait_ms);
   mut = bm_mutex_create();
   bm_sub("bmcam/cmd", sub_cb);
   IOWrite(&BB_VBUS_EN, 0);
