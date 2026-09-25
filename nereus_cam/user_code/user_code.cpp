@@ -75,15 +75,20 @@ static void sub_cb(uint64_t, const char *topic, uint16_t topic_len,
   BmTimer timer =
       bm_timer_create("cmd_hold", trigger_ms, false, info, timer_cb);
   if (!timer || bm_timer_start(timer, 0) != BmOK) {
-    bm_debug("Could not start timer...");
     free_info(info);
+    if (timer) {
+      bm_timer_delete(timer, 0);
+      bm_debug("Could not create timer...");
+    } else {
+      bm_debug("Could not start timer...");
+    }
   }
 }
 
 void setup() {
   serial_bridge_init();
   get_config_uint(BM_CFG_PARTITION_SYSTEM, COMMAND_WAIT_KEY,
-                  sizeof(COMMAND_WAIT_KEY), &uptime_wait_ms);
+                  strlen(COMMAND_WAIT_KEY), &uptime_wait_ms);
   bm_sub("bmcam/cmd", sub_cb);
   IOWrite(&BB_VBUS_EN, 0);
   // ensure Vbus stable before enable Vout with a 5ms delay.
